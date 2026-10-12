@@ -8,7 +8,7 @@ one mobile build without process rules:
   dist/throne/<Name>_<Platform>_system_<proxy|direct>       throne://route link
   dist/throne/<Name>_<Platform>_system_<proxy|direct>.json  plain rules array
   dist/throne/ALL                                           remoteroute bundle
-  dist/singbox/<same names>.json and <Name>_mobile.json     sing-box route block
+  dist/singbox/<same names>.json and <Name>_mobile.json     sing-box dns + route
   dist/happ/<Name>.json, <Name>.DEEPLINK                    Happ (mobile build)
   dist/incy/<Name>.json, <Name>.DEEPLINK                    INCY (mobile build)
 
@@ -46,14 +46,19 @@ GEOSITE_DAT = RF + "/geosite.dat"
 # Throne resolves rule-set names through its built-in list.
 THRONE_SRSLIST = "https://raw.githubusercontent.com/throneproj/routeprofiles/rule-set/srslist.h"
 
+# DoH resolvers: remote is used for proxied domains (through the proxy),
+# direct for Russian/direct domains (Yandex, so Russian CDNs pick local nodes).
+DNS_REMOTE = "1.1.1.1"
+DNS_DIRECT = "77.88.8.8"
+
 # Happ/INCY DNS defaults; a profile can override any key via "happ": {...}.
 HAPP_DEFAULTS = {
     "RemoteDNSType": "DoH",
-    "RemoteDNSDomain": "https://1.1.1.1/dns-query",
-    "RemoteDNSIP": "1.1.1.1",
+    "RemoteDNSDomain": f"https://{DNS_REMOTE}/dns-query",
+    "RemoteDNSIP": DNS_REMOTE,
     "DomesticDNSType": "DoH",
-    "DomesticDNSDomain": "https://77.88.8.8/dns-query",
-    "DomesticDNSIP": "77.88.8.8",
+    "DomesticDNSDomain": f"https://{DNS_DIRECT}/dns-query",
+    "DomesticDNSIP": DNS_DIRECT,
     "DomainStrategy": "IPIfNonMatch",
     "FakeDNS": "false",
     "UseChunkFiles": "true",
@@ -232,12 +237,43 @@ def singbox_route(final, parts):
             "url": SRS_URL.format(kind=kind, name=name),
             "download_detour": "direct",
         })
-    return {"route": {
+    return {
+        "dns": singbox_dns(parts),
+        "route": {
+            "rules": rules,
+            "rule_set": defs,
+            "final": final,
+            "auto_detect_interface": True,
+            "default_domain_resolver": "dns-direct",
+        },
+    }
+
+
+# Same idea as Throne's "DNS routing": domains of direct rules resolve via the
+# direct server, domains of proxy rules via the remote one, the rest remote.
+# IPv4 only, matching the IPv6 reject rule.
+def singbox_dns(parts):
+    servers = {"direct": "dns-direct", "proxy": "dns-remote"}
+    rules = []
+    for _, match, act in parts:
+        server = servers.get(act.get("outbound"))
+        if not server:
+            continue
+        cond = {k: v for k, v in match.items() if k in ADDRESS and k != "ip_cidr"}
+        sites = [t for t in match.get("rule_set", []) if t.startswith("geosite-")]
+        if sites:
+            cond["rule_set"] = sites
+        if cond:
+            rules.append({**cond, "action": "route", "server": server})
+    return {
+        "servers": [
+            {"type": "https", "tag": "dns-remote", "server": DNS_REMOTE, "detour": "proxy"},
+            {"type": "https", "tag": "dns-direct", "server": DNS_DIRECT},
+        ],
         "rules": rules,
-        "rule_set": defs,
-        "final": final,
-        "auto_detect_interface": True,
-    }}
+        "final": "dns-remote",
+        "strategy": "ipv4_only",
+    }
 
 
 # --- Happ / INCY --------------------------------------------------------------
