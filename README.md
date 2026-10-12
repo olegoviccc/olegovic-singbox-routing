@@ -33,7 +33,7 @@ Browsers aren't in the System rule. They follow rules 7, 8 and 10 in every build
 
 - **Process rules need Throne's TUN mode** for apps that ignore the system proxy, such as games, qBittorrent and most CLI tools. In system-proxy mode those apps never reach Throne.
 - **A process is matched by the program that opens the connection**, not the window you see. That's why the System rule lists `curl`, `git`, `pacman` and so on, not just the terminals. Python apps show up as `python3`, so they aren't matched by name.
-- **Linux root processes** (`pacman` under sudo, `packagekitd`, `fwupd`) can only be identified if Throne's core can read other users' `/proc` entries. If it can't, they fall through to rule 10 and then to the proxy.
+- **Linux root processes** (`pacman` under sudo, Shelly's main `shelly` process, `packagekitd`, `fwupd`) can only be identified if Throne's core can read other users' `/proc` entries. If it can't, they fall through to rule 10 and then to the proxy.
 - **Happ/INCY can't keep rule order.** Rules are merged into Block, Proxy and Direct buckets, applied in that order.
 
 ## Importing
@@ -48,7 +48,38 @@ Or paste the contents of `dist/throne/ALL`, a `throne://remoteroute/` link that 
 
 **Happ / INCY:** open the `.DEEPLINK` contents on the device. `onadd` adds the profile and activates it.
 
-**sing-box:** merge `route` from the JSON into your config. It expects outbounds tagged `proxy` and `direct`.
+**sing-box:** merge `dns` and `route` from the JSON into your config. They expect outbounds tagged `proxy` and `direct`.
+
+## Throne settings (DNS and TUN)
+
+Throne keeps its settings in its own database, not in a file you can import, so set these by hand. They work with all four route profiles: with **Enable DNS Routing** on, Throne reads the active profile and sends the domains of direct rules to the Direct DNS server and the domains of proxy rules to the Remote DNS server.
+
+**Routing settings → DNS** (leave *Use Custom DNS Object* off)
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| Remote DNS | `https://1.1.1.1/dns-query` | DoH through the proxy for proxied and unmatched domains. Your ISP can't see or tamper with the lookups |
+| Remote DNS → Disable IPv6 | ✅ | IPv4 answers only, matching the IPv6 reject rule |
+| Direct DNS | `https://77.88.8.8/dns-query` | Yandex DoH for direct domains. Russian CDNs get a Russian answer, and the queries are encrypted |
+| Direct DNS → Disable IPv6 | ✅ | |
+| Default DNS server | `remote` | domains that match no rule are resolved through the proxy |
+| Enable DNS Routing | ✅ | |
+| Enable FakeIP | ❌ | not needed: sniffing already restores domain names, and FakeIP can break apps that cache IPs |
+| Default Domain Strategy | `ipv4_only` | how the proxy server's own hostname is resolved |
+| Resolve Domain Strategy | *(empty)* | |
+
+**TUN settings**
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| Tun Enable IPv6 | ❌ | with Strict Route on, IPv6 becomes unreachable instead of bypassing the tunnel |
+| Strict Route | ✅ | stops IPv6 and DNS from leaking around the tunnel. Already on by default on Windows; turn it on for Linux |
+| Auto Redirect (Linux) | ✅ (default) | |
+| Private Range Bypass | ✅ (default) | LAN, KDE Connect and printers stay outside the tunnel |
+
+If Strict Route breaks Docker or VM networking on Linux, turn it off and also turn off IPv6 on the system (e.g. `sysctl net.ipv6.conf.all.disable_ipv6=1`). Otherwise IPv6 traffic goes around the tunnel.
+
+The sing-box files in `dist/singbox/` include the same DNS setup as a `dns` block. Happ/INCY profiles use the same two resolvers.
 
 ## Editing
 

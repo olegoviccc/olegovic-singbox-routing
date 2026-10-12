@@ -1,4 +1,80 @@
 {
+  "dns": {
+    "servers": [
+      {
+        "type": "https",
+        "tag": "dns-remote",
+        "server": "1.1.1.1",
+        "detour": "proxy"
+      },
+      {
+        "type": "https",
+        "tag": "dns-direct",
+        "server": "77.88.8.8"
+      }
+    ],
+    "rules": [
+      {
+        "rule_set": [
+          "geosite-telegram",
+          "geosite-discord",
+          "geosite-whatsapp"
+        ],
+        "action": "route",
+        "server": "dns-remote"
+      },
+      {
+        "rule_set": [
+          "geosite-steam",
+          "geosite-blizzard"
+        ],
+        "action": "route",
+        "server": "dns-direct"
+      },
+      {
+        "domain_suffix": [
+          "aur.archlinux.org"
+        ],
+        "rule_set": [
+          "geosite-ru-blocked",
+          "geosite-youtube",
+          "geosite-roblox",
+          "geosite-category-ai-!cn",
+          "geosite-github",
+          "geosite-docker",
+          "geosite-npmjs",
+          "geosite-jetbrains",
+          "geosite-notion",
+          "geosite-nvidia",
+          "geosite-intel",
+          "geosite-spotify"
+        ],
+        "action": "route",
+        "server": "dns-remote"
+      },
+      {
+        "rule_set": [
+          "geosite-ru-available-only-inside"
+        ],
+        "action": "route",
+        "server": "dns-direct"
+      },
+      {
+        "domain_suffix": [
+          "ru",
+          "su",
+          "xn--p1ai"
+        ],
+        "rule_set": [
+          "geosite-category-ru"
+        ],
+        "action": "route",
+        "server": "dns-direct"
+      }
+    ],
+    "final": "dns-remote",
+    "strategy": "ipv4_only"
+  },
   "route": {
     "rules": [
       {
@@ -189,7 +265,8 @@
           "pkcon",
           "rate-mirrors",
           "shelly",
-          "Shelly",
+          "shelly-ui",
+          "shelly-notifications",
           "plasmashell",
           "kwin_wayland",
           "kwin_x11",
@@ -409,6 +486,7 @@
       }
     ],
     "final": "proxy",
-    "auto_detect_interface": true
+    "auto_detect_interface": true,
+    "default_domain_resolver": "dns-direct"
   }
 }
