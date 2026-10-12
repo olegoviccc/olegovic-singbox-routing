@@ -1,0 +1,24 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Generate profiles and verify rule-sets exist upstream
+        run: python3 build.py --check
+      - name: Make sure dist/ is up to date
+        run: |
+          if [ -n "$(git status --porcelain dist)" ]; then
+            git status --short dist
+            echo "::error::dist/ is stale. Run 'python3 build.py' and commit the result."
+            exit 1
+          fi

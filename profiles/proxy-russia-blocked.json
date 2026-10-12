@@ -1,0 +1,16 @@
+{
+  "name": "Proxy Russia Blocked",
+  "description": "Everything direct except sites/IPs blocked in Russia (plus YouTube, Discord, Telegram), which go through the proxy.",
+  "final": "direct",
+  "rules": [
+    {
+      "outbound": "block",
+      "geosite": ["category-ads-all"]
+    },
+    {
+      "outbound": "proxy",
+      "geosite": ["ru-blocked", "youtube", "discord", "telegram"],
+      "geoip": ["ru-blocked", "telegram"]
+    }
+  ]
+}
