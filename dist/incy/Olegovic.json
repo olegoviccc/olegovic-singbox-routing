@@ -1,5 +1,5 @@
 {
-  "Name": "Bypass Russia",
+  "Name": "Olegovic",
   "GlobalProxy": "true",
   "RemoteDNSType": "DoH",
   "RemoteDNSDomain": "https://1.1.1.1/dns-query",
@@ -12,13 +12,15 @@
   "UseChunkFiles": "true",
   "Geoipurl": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/geoip.dat",
   "Geositeurl": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/geosite.dat",
-  "LastUpdated": "1791824786",
+  "LastUpdated": "1791826865",
   "DnsHosts": {},
-  "RouteOrder": "block-direct-proxy",
+  "RouteOrder": "block-proxy-direct",
   "DirectSites": [
     "geosite:private",
-    "geosite:category-ru",
+    "geosite:steam",
+    "geosite:blizzard",
     "geosite:ru-available-only-inside",
+    "geosite:category-ru",
     "domain:ru",
     "domain:su",
     "domain:xn--p1ai"
@@ -27,8 +29,28 @@
     "geoip:private",
     "geoip:ru"
   ],
-  "ProxySites": [],
-  "ProxyIp": [],
+  "ProxySites": [
+    "geosite:telegram",
+    "geosite:discord",
+    "geosite:whatsapp",
+    "geosite:ru-blocked",
+    "geosite:youtube",
+    "geosite:roblox",
+    "geosite:category-ai-!cn",
+    "geosite:github",
+    "geosite:docker",
+    "geosite:npmjs",
+    "geosite:jetbrains",
+    "geosite:notion",
+    "geosite:nvidia",
+    "geosite:intel",
+    "geosite:spotify",
+    "domain:aur.archlinux.org"
+  ],
+  "ProxyIp": [
+    "geoip:telegram",
+    "geoip:ru-blocked"
+  ],
   "BlockSites": [
     "geosite:category-ads-all"
   ],

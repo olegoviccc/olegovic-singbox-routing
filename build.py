@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Generate client-specific routing profiles from profiles/*.json.
 
-One source profile -> four outputs:
+Each source profile is built for every desktop platform it lists, once with
+"system" rules going through the proxy and once with them going direct, plus
+one mobile build without process rules:
 
-  dist/throne/<Name>        throne://route/<base64> link (import in Throne)
-  dist/throne/<Name>.json   plain rules array (for reading / copy-paste)
-  dist/singbox/<Name>.json  sing-box "route" block with remote rule_set defs
-  dist/happ/<Name>.json     Happ routing profile (Xray geosite/geoip)
-  dist/happ/<Name>.DEEPLINK happ://routing/onadd/<base64>
-  dist/incy/...             same as happ, with incy:// links
-
-plus dist/throne/ALL (throne://remoteroute bundle of every profile).
+  dist/throne/<Name>_<Platform>_system_<proxy|direct>       throne://route link
+  dist/throne/<Name>_<Platform>_system_<proxy|direct>.json  plain rules array
+  dist/throne/ALL                                           remoteroute bundle
+  dist/singbox/<same names>.json and <Name>_mobile.json     sing-box route block
+  dist/happ/<Name>.json, <Name>.DEEPLINK                    Happ (mobile build)
+  dist/incy/<Name>.json, <Name>.DEEPLINK                    INCY (mobile build)
 
 Usage:
   python3 build.py           regenerate dist/
@@ -59,9 +59,16 @@ HAPP_DEFAULTS = {
     "UseChunkFiles": "true",
 }
 
-OUTBOUNDS = ("proxy", "direct", "block")
-MATCHERS = ("geosite", "geoip", "domain", "domain_suffix", "domain_keyword",
-            "domain_regex", "ip_cidr")
+OUTBOUNDS = ("proxy", "direct", "block", "system")
+PLATFORMS = ("linux", "windows")
+
+# sing-box ORs these together within one rule (rule_set merges into them).
+ADDRESS = ("domain", "domain_suffix", "domain_keyword", "domain_regex", "ip_cidr")
+# sing-box ANDs each of these with everything else, so every one becomes its
+# own rule. Values are a list (all platforms) or {"linux": [...], ...}.
+PROCESS = ("process_name", "process_path", "process_path_regex")
+# Emitted together as a single AND rule; can't be mixed with other matchers.
+CONDITION = ("ip_version", "network", "port")
 
 
 def die(msg):
@@ -90,14 +97,26 @@ def load_profile(path):
         die(f"{where}: missing name")
     if p.get("final", "proxy") not in ("proxy", "direct"):
         die(f"{where}: final must be proxy or direct")
+    for plat in p.get("platforms", []):
+        if plat not in PLATFORMS:
+            die(f"{where}: unknown platform {plat!r}")
+    known = set(ADDRESS + PROCESS + CONDITION) | {"geosite", "geoip", "protocol", "outbound", "name"}
     for i, rule in enumerate(p.get("rules", []), 1):
+        tag = f"{where}: rule {rule.get('name') or i!r}"
         if rule.get("outbound") not in OUTBOUNDS:
-            die(f"{where}: rule #{i}: outbound must be one of {OUTBOUNDS}")
-        unknown = set(rule) - set(MATCHERS) - {"outbound", "name"}
+            die(f"{tag}: outbound must be one of {OUTBOUNDS}")
+        unknown = set(rule) - known
         if unknown:
-            die(f"{where}: rule #{i}: unknown keys {sorted(unknown)}")
-        if not any(rule.get(m) for m in MATCHERS):
-            die(f"{where}: rule #{i}: no matchers")
+            die(f"{tag}: unknown keys {sorted(unknown)}")
+        for key in PROCESS:
+            if isinstance(rule.get(key), dict) and set(rule[key]) - set(PLATFORMS):
+                die(f"{tag}: {key} has unknown platforms")
+        has_cond = any(k in rule for k in CONDITION)
+        has_other = any(k in rule for k in known - set(CONDITION) - {"outbound", "name"})
+        if has_cond and has_other:
+            die(f"{tag}: {CONDITION} can't be combined with other matchers")
+        if not has_cond and not has_other:
+            die(f"{tag}: no matchers")
     return p
 
 
@@ -106,44 +125,89 @@ def rule_sets(rule):
             + [f"geoip-{n}" for n in rule.get("geoip", [])])
 
 
-def action(rule):
-    if rule["outbound"] == "block":
+def for_platform(value, platform):
+    if platform is None or not value:
+        return []
+    if isinstance(value, dict):
+        return value.get(platform, [])
+    return value
+
+
+def action(outbound):
+    if outbound == "block":
         return {"action": "reject"}
-    return {"action": "route", "outbound": rule["outbound"]}
+    return {"action": "route", "outbound": outbound}
 
 
-# sing-box splits domain and IP matchers of one rule with OR, which is what we
-# want, so a rule maps 1:1. Throne uses the same field names.
-def singbox_matchers(rule):
-    out = {}
-    for key in ("domain", "domain_suffix", "domain_keyword", "domain_regex", "ip_cidr"):
-        if rule.get(key):
-            out[key] = rule[key]
+def expand(rule, platform, system):
+    """One source rule -> list of (label, sing-box matchers, action) parts.
+
+    platform None means a mobile build: process rules are dropped, and so are
+    "system" rules, since there is nothing to match them against."""
+    outbound = rule["outbound"]
+    if outbound == "system":
+        if platform is None:
+            return []
+        outbound = system
+    act = action(outbound)
+    name = rule.get("name", "")
+    parts = []
+
+    cond = {k: rule[k] for k in CONDITION if k in rule}
+    if cond:
+        parts.append((name, cond, act))
+
+    addr = {k: rule[k] for k in ADDRESS if rule.get(k)}
     if rule_sets(rule):
-        out["rule_set"] = rule_sets(rule)
+        addr["rule_set"] = rule_sets(rule)
+    if addr:
+        parts.append((name, addr, act))
+
+    for proto in rule.get("protocol", []):
+        parts.append((f"{name} ({proto})", {"protocol": proto}, act))
+
+    for key in PROCESS:
+        values = for_platform(rule.get(key), platform)
+        if values:
+            label = key.replace("process_", "").replace("_", " ")
+            parts.append((f"{name} (process {label})", {key: values}, act))
+    return parts
+
+
+def target_parts(p, platform, system):
+    parts = [
+        ("DNS", {"protocol": "dns"}, {"action": "hijack-dns"}),
+        ("LAN", {"ip_is_private": True}, action("direct")),
+    ]
+    for rule in p.get("rules", []):
+        parts += expand(rule, platform, system)
+    return parts
+
+
+def targets(p):
+    """(display name, file slug, platform, system) for every build of p."""
+    out = []
+    uses_system = any(r["outbound"] == "system" for r in p.get("rules", []))
+    for plat in p.get("platforms", []):
+        for system in (("proxy", "direct") if uses_system else ("proxy",)):
+            suffix = f" {plat.capitalize()}" + (f" system-{system}" if uses_system else "")
+            out.append((p["name"] + suffix, slug(p["name"] + suffix), plat, system))
     return out
 
 
 # --- Throne -------------------------------------------------------------------
 
-def throne_rules(p):
-    rules = [
-        {"action": "hijack-dns", "protocol": "dns"},
-        {"action": "route", "ip_is_private": True, "outbound": "direct"},
-    ]
-    for rule in p.get("rules", []):
-        rules.append({**action(rule), **singbox_matchers(rule)})
-    return rules
+def throne_rules(parts):
+    return [{**match, **act} for _, match, act in parts]
 
 
-def throne_link(p):
-    rules = []
-    for i, r in enumerate(throne_rules(p), 1):
-        rules.append({**r, "name": f"rule #{i}", "type": "custom"})
+def throne_link(name, final, parts):
+    rules = [{**match, **act, "name": label or f"rule #{i}", "type": "custom"}
+             for i, (label, match, act) in enumerate(parts, 1)]
     payload = {
-        "default_outbound": p.get("final", "proxy"),
+        "default_outbound": final,
         "kind": "throne-route-profile",
-        "name": p["name"],
+        "name": name,
         "rules": rules,
         "v": 1,
     }
@@ -152,16 +216,12 @@ def throne_link(p):
 
 # --- sing-box -----------------------------------------------------------------
 
-def singbox_route(p):
-    rules = [
-        {"action": "sniff"},
-        {"protocol": "dns", "action": "hijack-dns"},
-        {"ip_is_private": True, "action": "route", "outbound": "direct"},
-    ]
+def singbox_route(final, parts):
+    rules = [{"action": "sniff"}]
     tags = []
-    for rule in p.get("rules", []):
-        rules.append({**singbox_matchers(rule), **action(rule)})
-        tags += [t for t in rule_sets(rule) if t not in tags]
+    for _, match, act in parts:
+        rules.append({**match, **act})
+        tags += [t for t in match.get("rule_set", []) if t not in tags]
     defs = []
     for tag in tags:
         kind, name = tag.split("-", 1)
@@ -175,7 +235,7 @@ def singbox_route(p):
     return {"route": {
         "rules": rules,
         "rule_set": defs,
-        "final": p.get("final", "proxy"),
+        "final": final,
         "auto_detect_interface": True,
     }}
 
@@ -196,18 +256,23 @@ def xray_ips(rule):
 
 
 def happ_profile(p, last_updated):
-    buckets = {o: {"sites": [], "ip": []} for o in OUTBOUNDS}
+    buckets = {o: {"sites": [], "ip": []} for o in ("proxy", "direct", "block")}
     buckets["direct"]["sites"].append("geosite:private")
     buckets["direct"]["ip"].append("geoip:private")
     order = []
     for rule in p.get("rules", []):
         o = rule["outbound"]
+        sites, ips = xray_domains(rule), xray_ips(rule)
+        # Happ has no process, protocol or port matching; system rules are
+        # desktop-only.
+        if o == "system" or not (sites or ips):
+            continue
         if o not in order:
             order.append(o)
-        buckets[o]["sites"] += [x for x in xray_domains(rule) if x not in buckets[o]["sites"]]
-        buckets[o]["ip"] += [x for x in xray_ips(rule) if x not in buckets[o]["ip"]]
+        buckets[o]["sites"] += [x for x in sites if x not in buckets[o]["sites"]]
+        buckets[o]["ip"] += [x for x in ips if x not in buckets[o]["ip"]]
     # Happ can't keep per-rule order, only the order of the three buckets.
-    order += [o for o in OUTBOUNDS if o not in order]
+    order += [o for o in buckets if o not in order]
 
     prof = {
         "Name": p["name"],
@@ -248,6 +313,10 @@ def write(path, text):
     path.write_text(text if text.endswith("\n") else text + "\n", encoding="utf-8")
 
 
+def dump(obj):
+    return json.dumps(obj, indent=2, ensure_ascii=False)
+
+
 def build(profiles):
     expected = set()
 
@@ -256,26 +325,34 @@ def build(profiles):
         write(DIST / rel, text)
 
     bundle = []
+    built = []
     for p in profiles:
-        name = slug(p["name"])
-        out(f"throne/{name}", throne_link(p))
-        out(f"throne/{name}.json", json.dumps(throne_rules(p), indent=2, ensure_ascii=False))
-        out(f"singbox/{name}.json", json.dumps(singbox_route(p), indent=2, ensure_ascii=False))
-        bundle.append(f"{RAW}/throne/{name}#{p['name']}")
+        final = p.get("final", "proxy")
+        for display, name, plat, system in targets(p):
+            parts = target_parts(p, plat, system)
+            out(f"throne/{name}", throne_link(display, final, parts))
+            out(f"throne/{name}.json", dump(throne_rules(parts)))
+            out(f"singbox/{name}.json", dump(singbox_route(final, parts)))
+            bundle.append(f"{RAW}/throne/{name}#{display}")
+            built.append(name)
 
+        name = slug(p["name"])
+        out(f"singbox/{name}_mobile.json", dump(singbox_route(final, target_parts(p, None, None))))
         happ_json = DIST / f"happ/{name}.json"
         prof = happ_profile(p, happ_last_updated(p, happ_json))
-        text = json.dumps(prof, indent=2, ensure_ascii=False)
         for client in ("happ", "incy"):
-            out(f"{client}/{name}.json", text)
+            out(f"{client}/{name}.json", dump(prof))
             out(f"{client}/{name}.DEEPLINK", f"{client}://routing/onadd/{b64(compact(prof))}")
+        built.append(f"{name} (mobile)")
 
-    out("throne/ALL", "throne://remoteroute/" + b64("\n".join(bundle), urlsafe=True))
+    if bundle:
+        out("throne/ALL", "throne://remoteroute/" + b64("\n".join(bundle), urlsafe=True))
 
     for stale in DIST.rglob("*"):
         if stale.is_file() and stale not in expected:
             stale.unlink()
             print(f"removed stale {stale.relative_to(ROOT)}")
+    return built
 
 
 def fetch(url):
@@ -288,9 +365,13 @@ def check(profiles):
     srslist = fetch(THRONE_SRSLIST).decode()
     throne_tags = set(re.findall(r'\{"([^"]+)",\s*"', srslist))
     bad = []
+    seen = set()
     for p in profiles:
         for rule in p.get("rules", []):
             for tag in rule_sets(rule):
+                if tag in seen:
+                    continue
+                seen.add(tag)
                 if tag not in throne_tags:
                     bad.append(f"{p['name']}: {tag} is not a Throne built-in rule-set")
                 kind, name = tag.split("-", 1)
@@ -300,11 +381,20 @@ def check(profiles):
                     urllib.request.urlopen(req, timeout=30).close()
                 except urllib.error.URLError:
                     bad.append(f"{p['name']}: {tag} not found in runetfreedom ({url})")
+            for key in PROCESS:
+                if key != "process_path_regex":
+                    continue
+                for plat in PLATFORMS:
+                    for rx in for_platform(rule.get(key), plat):
+                        try:
+                            re.compile(rx)
+                        except re.error as e:
+                            bad.append(f"{p['name']}: bad regex {rx!r}: {e}")
     for b in bad:
         print(b, file=sys.stderr)
     if bad:
         sys.exit(1)
-    print("all rule-sets exist upstream")
+    print(f"all {len(seen)} rule-sets exist upstream")
 
 
 def main():
@@ -315,8 +405,8 @@ def main():
     names = [slug(p["name"]) for p in profiles]
     if len(set(names)) != len(names):
         die("two profiles share the same name")
-    build(profiles)
-    print(f"built {len(profiles)} profile(s): {', '.join(names)}")
+    built = build(profiles)
+    print(f"built {len(built)} target(s): {', '.join(built)}")
     if "--check" in sys.argv[1:]:
         check(profiles)
 

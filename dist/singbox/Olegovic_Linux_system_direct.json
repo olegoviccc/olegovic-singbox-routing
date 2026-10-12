@@ -1,0 +1,414 @@
+{
+  "route": {
+    "rules": [
+      {
+        "action": "sniff"
+      },
+      {
+        "protocol": "dns",
+        "action": "hijack-dns"
+      },
+      {
+        "ip_is_private": true,
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "ip_version": 6,
+        "action": "reject"
+      },
+      {
+        "rule_set": [
+          "geosite-category-ads-all"
+        ],
+        "action": "reject"
+      },
+      {
+        "protocol": "bittorrent",
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "process_name": [
+          "qbittorrent",
+          "qbittorrent-nox"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "rule_set": [
+          "geosite-telegram",
+          "geosite-discord",
+          "geosite-whatsapp",
+          "geoip-telegram"
+        ],
+        "action": "route",
+        "outbound": "proxy"
+      },
+      {
+        "process_name": [
+          "Discord",
+          "discord",
+          "Telegram",
+          "telegram-desktop"
+        ],
+        "action": "route",
+        "outbound": "proxy"
+      },
+      {
+        "rule_set": [
+          "geosite-steam",
+          "geosite-blizzard"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "process_name": [
+          "steam",
+          "steamwebhelper",
+          "reaper",
+          "pressure-vessel-wrap",
+          "wine",
+          "wine64",
+          "wine-preloader",
+          "wine64-preloader",
+          "wineserver",
+          "umu-run",
+          "faugus-launcher",
+          "lutris"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "process_path_regex": [
+          "/\\.local/share/Steam/",
+          "/\\.steam/",
+          "/com\\.valvesoftware\\.Steam/",
+          "/steamapps/",
+          "/compatibilitytools\\.d/",
+          "/\\.local/share/umu/",
+          "/\\.local/share/lutris/",
+          "/\\.local/share/faugus-launcher/",
+          "/\\.config/faugus-launcher/",
+          "/Faugus/",
+          "/Games/",
+          "^/usr/lib/steam/",
+          "^/usr/(lib|lib32|share)/wine/"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "network": "udp",
+        "port": [
+          443
+        ],
+        "action": "reject"
+      },
+      {
+        "domain_suffix": [
+          "aur.archlinux.org"
+        ],
+        "rule_set": [
+          "geosite-ru-blocked",
+          "geosite-youtube",
+          "geosite-roblox",
+          "geosite-category-ai-!cn",
+          "geosite-github",
+          "geosite-docker",
+          "geosite-npmjs",
+          "geosite-jetbrains",
+          "geosite-notion",
+          "geosite-nvidia",
+          "geosite-intel",
+          "geosite-spotify",
+          "geoip-ru-blocked"
+        ],
+        "action": "route",
+        "outbound": "proxy"
+      },
+      {
+        "rule_set": [
+          "geosite-ru-available-only-inside"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "process_name": [
+          "konsole",
+          "yakuake",
+          "kitty",
+          "alacritty",
+          "ghostty",
+          "wezterm",
+          "wezterm-gui",
+          "foot",
+          "footclient",
+          "gnome-terminal-server",
+          "kgx",
+          "ptyxis",
+          "tilix",
+          "terminator",
+          "xfce4-terminal",
+          "qterminal",
+          "lxterminal",
+          "xterm",
+          "urxvt",
+          "st",
+          "rio",
+          "contour",
+          "warp",
+          "bash",
+          "zsh",
+          "fish",
+          "sh",
+          "nu",
+          "curl",
+          "wget",
+          "wget2",
+          "aria2c",
+          "git",
+          "git-remote-http",
+          "git-remote-https",
+          "ssh",
+          "scp",
+          "sftp",
+          "rsync",
+          "pacman",
+          "paru",
+          "yay",
+          "pikaur",
+          "flatpak",
+          "fwupd",
+          "fwupdmgr",
+          "packagekitd",
+          "pkcon",
+          "rate-mirrors",
+          "shelly",
+          "Shelly",
+          "plasmashell",
+          "kwin_wayland",
+          "kwin_x11",
+          "kded6",
+          "kded5",
+          "ksmserver",
+          "krunner",
+          "dolphin",
+          "systemsettings",
+          "plasma-discover",
+          "kdeconnectd",
+          "kioworker",
+          "baloo_file",
+          "spectacle",
+          "kwalletd6",
+          "drkonqi",
+          "NetworkManager",
+          "systemd-resolved",
+          "systemd-timesyncd",
+          "avahi-daemon",
+          "cupsd",
+          "dockerd",
+          "containerd",
+          "docker",
+          "podman"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "process_path_regex": [
+          "^/usr/lib/kf6/",
+          "^/usr/lib/kf5/",
+          "^/usr/lib/libexec/",
+          "^/usr/lib/systemd/",
+          "^/usr/lib/packagekit",
+          "(?i)/shelly"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "domain_suffix": [
+          "ru",
+          "su",
+          "xn--p1ai"
+        ],
+        "rule_set": [
+          "geosite-category-ru",
+          "geoip-ru"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      }
+    ],
+    "rule_set": [
+      {
+        "tag": "geosite-category-ads-all",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-category-ads-all.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-telegram",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-telegram.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-discord",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-discord.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-whatsapp",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-whatsapp.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geoip-telegram",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geoip/geoip-telegram.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-steam",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-steam.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-blizzard",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-blizzard.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-ru-blocked",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-ru-blocked.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-youtube",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-youtube.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-roblox",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-roblox.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-category-ai-!cn",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-category-ai-!cn.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-github",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-github.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-docker",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-docker.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-npmjs",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-npmjs.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-jetbrains",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-jetbrains.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-notion",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-notion.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-nvidia",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-nvidia.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-intel",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-intel.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-spotify",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-spotify.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geoip-ru-blocked",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geoip/geoip-ru-blocked.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-ru-available-only-inside",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-ru-available-only-inside.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geosite-category-ru",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geosite/geosite-category-ru.srs",
+        "download_detour": "direct"
+      },
+      {
+        "tag": "geoip-ru",
+        "type": "remote",
+        "format": "binary",
+        "url": "https://raw.githubusercontent.com/runetfreedom/russia-v2ray-rules-dat/release/sing-box/rule-set-geoip/geoip-ru.srs",
+        "download_detour": "direct"
+      }
+    ],
+    "final": "proxy",
+    "auto_detect_interface": true
+  }
+}

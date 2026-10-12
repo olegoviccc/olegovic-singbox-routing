@@ -1,70 +1,85 @@
 # olegovic-singbox-routing
 
-My routing profiles, written once and generated for several clients:
+My routing profile, written once in `profiles/olegovic.json` and generated for several clients.
 
-| Client | What to use |
-| --- | --- |
-| [Throne](https://github.com/throneproj/Throne) | `dist/throne/<Name>` (a `throne://route/…` link) or `dist/throne/ALL` (all profiles at once) |
-| Happ | `dist/happ/<Name>.DEEPLINK` (`happ://routing/onadd/…`) or `dist/happ/<Name>.json` |
-| INCY | `dist/incy/<Name>.DEEPLINK` (`incy://routing/onadd/…`) or `dist/incy/<Name>.json` |
-| Any sing-box client (sing-box, Hiddify, Karing, NekoBox…) | `dist/singbox/<Name>.json`, a `route` block to paste into a full config |
+| Client | File | Notes |
+| --- | --- | --- |
+| [Throne](https://github.com/throneproj/Throne) | `dist/throne/Olegovic_<Linux\|Windows>_system_<proxy\|direct>` | `throne://route/…` link. `dist/throne/ALL` adds all four |
+| Happ | `dist/happ/Olegovic.DEEPLINK` / `.json` | mobile build, no process rules |
+| INCY | `dist/incy/Olegovic.DEEPLINK` / `.json` | mobile build, no process rules |
+| sing-box (Hiddify, Karing, NekoBox…) | `dist/singbox/<same names>.json`, `Olegovic_mobile.json` | `route` block to merge into a full config |
 
-## Profiles
+## What goes where
 
-| Profile | Default | Direct | Proxy | Blocked |
-| --- | --- | --- | --- | --- |
-| **Bypass Russia** | proxy | private IPs, `category-ru`, `ru-available-only-inside`, `geoip:ru`, `.ru` `.su` `.рф` | everything else | ads |
+Rules are checked top to bottom and the first match wins. Anything that matches nothing goes through the **proxy**.
+
+| # | Rule | Goes | Matches |
+| --- | --- | --- | --- |
+| – | DNS, LAN | hijack / direct | added automatically |
+| 1 | IPv6 off | reject | every IPv6 connection; apps fall back to IPv4 |
+| 2 | Ads | reject | `category-ads-all` |
+| 3 | Torrents | direct | the BitTorrent protocol (any client), qBittorrent processes |
+| 4 | Messengers | proxy | Telegram, Discord, WhatsApp domains and Telegram IPs. Discord/Telegram processes too, so **Discord voice** (UDP to bare IPs) is caught |
+| 5 | Gaming | direct | Steam/Blizzard domains; Steam, Battle.net, Wine/Proton, umu, Lutris and Faugus processes; anything under Steam, `steamapps`, `compatibilitytools.d`, `~/Games`, `~/Faugus` and the Battle.net/Blizzard install folders |
+| 6 | QUIC off | reject | UDP 443 that wasn't already sent direct for gaming. Browsers and YouTube fall back to TCP |
+| 7 | Blocked or geoblocked | proxy | `ru-blocked` (domains and IPs), YouTube, Roblox, AI services, GitHub, Docker, npm, AUR, JetBrains, Notion, NVIDIA, Intel, Spotify |
+| 8 | Russia-only services | direct | `ru-available-only-inside` (banks, government services and other sites that reject foreign IPs) |
+| 9 | **System** | **proxy or direct**, per build | terminals, shells, CLI tools, package managers (pacman, paru, yay, Shelly, flatpak…), KDE Plasma and its helpers, systemd services, Docker. On Windows: `C:\Windows\…`, Windows Terminal, PowerShell, Git, Defender |
+| 10 | Russia | direct | `category-ru`, `geoip:ru`, `.ru` `.su` `.рф` |
+
+Browsers aren't in the System rule. They follow rules 7, 8 and 10 in every build.
+
+### Things to know
+
+- **Process rules need Throne's TUN mode** for apps that ignore the system proxy, such as games, qBittorrent and most CLI tools. In system-proxy mode those apps never reach Throne.
+- **A process is matched by the program that opens the connection**, not the window you see. That's why the System rule lists `curl`, `git`, `pacman` and so on, not just the terminals. Python apps show up as `python3`, so they aren't matched by name.
+- **Linux root processes** (`pacman` under sudo, `packagekitd`, `fwupd`) can only be identified if Throne's core can read other users' `/proc` entries. If it can't, they fall through to rule 10 and then to the proxy.
+- **Happ/INCY can't keep rule order.** Rules are merged into Block, Proxy and Direct buckets, applied in that order.
 
 ## Importing
 
-**Throne:** import a single profile from its raw link, e.g.
+**Throne:** import from a raw link (it works once this is on `main`), e.g.
 
 ```
-https://raw.githubusercontent.com/olegoviccc/olegovic-singbox-routing/main/dist/throne/Bypass_Russia
+https://raw.githubusercontent.com/olegoviccc/olegovic-singbox-routing/main/dist/throne/Olegovic_Linux_system_direct
 ```
 
-Or open the contents of `dist/throne/ALL`, a `throne://remoteroute/` link that adds every profile from this repo.
+Or paste the contents of `dist/throne/ALL`, a `throne://remoteroute/` link that adds all four.
 
-**Happ / INCY:** open the `.DEEPLINK` file's contents on the device, or paste the link into the app. `onadd` adds the profile and activates it right away.
+**Happ / INCY:** open the `.DEEPLINK` contents on the device. `onadd` adds the profile and activates it.
 
-**sing-box:** merge `route` from `dist/singbox/<Name>.json` into your config. It expects outbounds tagged `proxy` and `direct`. Rule-sets download through `direct`.
+**sing-box:** merge `route` from the JSON into your config. It expects outbounds tagged `proxy` and `direct`.
 
 ## Editing
 
-1. Edit or add a file in `profiles/` (format below).
+1. Edit `profiles/olegovic.json`.
 2. Run `python3 build.py` (Python 3, no dependencies). `--check` also verifies that every rule-set exists upstream.
-3. Commit `profiles/` and `dist/` together. CI fails if `dist/` is out of date.
+3. Commit `profiles/` and `dist/` together. CI fails if `dist/` is stale, and it runs every sing-box output through `sing-box check`.
+
+Rule format:
 
 ```jsonc
 {
-  "name": "My Profile",          // shown in the client; file names come from it
-  "final": "proxy",              // where unmatched traffic goes: proxy | direct
-  "rules": [                     // first match wins (see the Happ note)
-    {
-      "outbound": "direct",      // proxy | direct | block
-      "geosite": ["category-ru"],      // geosite-<name> / geosite:<name>
-      "geoip": ["ru"],                 // geoip-<name>   / geoip:<name>
-      "domain": ["exact.example.com"],
-      "domain_suffix": ["example.com"],
-      "domain_keyword": ["example"],
-      "domain_regex": ["^ex.*\\.com$"],
-      "ip_cidr": ["1.2.3.0/24"]
-    }
-  ],
-  "happ": { "RemoteDNSIP": "8.8.8.8" }  // optional overrides for Happ/INCY fields
+  "name": "Gaming",
+  "outbound": "direct",            // proxy | direct | block | system
+  "geosite": ["steam"],            // Throne: geosite-steam, Happ: geosite:steam
+  "geoip": ["ru"],
+  "domain": [], "domain_suffix": [], "domain_keyword": [], "domain_regex": [], "ip_cidr": [],
+  "protocol": ["bittorrent"],      // sniffed protocol
+  "process_name":       { "linux": ["steam"], "windows": ["steam.exe"] },  // or a plain list for all platforms
+  "process_path":       { ... },
+  "process_path_regex": { "linux": ["/steamapps/"] }                       // Go RE2 syntax
 }
 ```
 
-Every profile automatically starts with DNS hijack and sends private/LAN IPs direct.
+- Domain, IP and geo matchers are combined with OR.
+- `protocol` and each `process_*` key become separate rules with the same outbound, because sing-box would otherwise require all of them to match at once.
+- `ip_version`, `network` and `port` form one combined rule and can't be mixed with other matchers.
+- `outbound: "system"` produces the two builds per platform, and the rule is left out of mobile builds.
 
 ### Where the geo lists come from
 
-- **Throne:** its built-in rule-set names ([list](https://github.com/throneproj/routeprofiles/blob/rule-set/srslist.h)).
-- **sing-box, Happ, INCY:** [runetfreedom/russia-v2ray-rules-dat](https://github.com/runetfreedom/russia-v2ray-rules-dat) (`.srs` for sing-box, `geosite.dat`/`geoip.dat` for Happ/INCY), which uses the same category names.
+- **Throne:** its built-in rule-sets ([list](https://github.com/throneproj/routeprofiles/blob/rule-set/srslist.h)).
+- **sing-box / Happ / INCY:** [runetfreedom/russia-v2ray-rules-dat](https://github.com/runetfreedom/russia-v2ray-rules-dat), which uses the same category names.
 
-`build.py --check` fails if a name you use is missing from either source.
-
-### Client differences
-
-- **Happ/INCY** can't keep rule order. Rules are merged into Direct, Proxy and Block buckets, and `RouteOrder` follows the order in which each outbound first appears in `rules`.
-- Happ only re-applies a profile when `LastUpdated` changes. The build bumps it only when a profile's content actually changes.
+`ru-blocked` combines the Roskomnadzor registry (via antifilter) with re:filter and community.antifilter, which also list some sites that block Russian users. Those lists are never complete, which is why everything defaults to the proxy.
