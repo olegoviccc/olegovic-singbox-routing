@@ -65,7 +65,8 @@ HAPP_DEFAULTS = {
 }
 
 OUTBOUNDS = ("proxy", "direct", "block", "system")
-PLATFORMS = ("linux", "windows")
+PLATFORMS = ("linux", "windows", "macos")
+PLATFORM_NAMES = {"linux": "Linux", "windows": "Windows", "macos": "macOS"}
 
 # sing-box ORs these together within one rule (rule_set merges into them).
 ADDRESS = ("domain", "domain_suffix", "domain_keyword", "domain_regex", "ip_cidr")
@@ -195,7 +196,7 @@ def targets(p):
     uses_system = any(r["outbound"] == "system" for r in p.get("rules", []))
     for plat in p.get("platforms", []):
         for system in (("proxy", "direct") if uses_system else ("proxy",)):
-            suffix = f" {plat.capitalize()}" + (f" system-{system}" if uses_system else "")
+            suffix = f" {PLATFORM_NAMES[plat]}" + (f" system-{system}" if uses_system else "")
             out.append((p["name"] + suffix, slug(p["name"] + suffix), plat, system))
     return out
 

@@ -4,7 +4,7 @@ My routing profile, written once in `profiles/olegovic.json` and generated for s
 
 | Client | File | Notes |
 | --- | --- | --- |
-| [Throne](https://github.com/throneproj/Throne) | `dist/throne/Olegovic_<Linux\|Windows>_system_<proxy\|direct>` | `throne://route/…` link. `dist/throne/ALL` adds all four |
+| [Throne](https://github.com/throneproj/Throne) | `dist/throne/Olegovic_<Linux\|Windows\|macOS>_system_<proxy\|direct>` | `throne://route/…` link. `dist/throne/ALL` adds all six |
 | Happ | `dist/happ/Olegovic.DEEPLINK` / `.json` | mobile build, no process rules |
 | INCY | `dist/incy/Olegovic.DEEPLINK` / `.json` | mobile build, no process rules |
 | sing-box (Hiddify, Karing, NekoBox…) | `dist/singbox/<same names>.json`, `Olegovic_mobile.json` | `route` block to merge into a full config |
@@ -20,17 +20,18 @@ Rules are checked top to bottom and the first match wins. Anything that matches 
 | 2 | Ads | reject | `category-ads-all` |
 | 3 | Torrents | direct | the BitTorrent protocol (any client), qBittorrent processes |
 | 4 | Messengers | proxy | Telegram, Discord, WhatsApp domains and Telegram IPs. Discord/Telegram processes too, so **Discord voice** (UDP to bare IPs) is caught |
-| 5 | Gaming | direct | Steam/Blizzard domains; Steam, Battle.net, Wine/Proton, umu, Lutris and Faugus processes; anything under Steam, `steamapps`, `compatibilitytools.d`, `~/Games`, `~/Faugus` and the Battle.net/Blizzard install folders |
+| 5 | Gaming | direct | Steam/Blizzard domains; Steam, Battle.net, Wine/Proton, umu, Lutris and Faugus processes (CrossOver, Whisky and Heroic on macOS); anything under Steam, `steamapps`, `compatibilitytools.d`, `~/Games`, `~/Faugus` and the Battle.net/Blizzard install folders |
 | 6 | QUIC off | reject | UDP 443 that wasn't already sent direct for gaming. Browsers and YouTube fall back to TCP |
 | 7 | Blocked or geoblocked | proxy | `ru-blocked` (domains and IPs), YouTube, Roblox, AI services, GitHub, Docker, npm, AUR, JetBrains, Notion, NVIDIA, Intel, Spotify |
 | 8 | Russia-only services | direct | `ru-available-only-inside` (banks, government services and other sites that reject foreign IPs) |
-| 9 | **System** | **proxy or direct**, per build | terminals, shells, CLI tools, package managers (pacman, paru, yay, Shelly, flatpak…), KDE Plasma and its helpers, systemd services, Docker. On Windows: `C:\Windows\…`, Windows Terminal, PowerShell, Git, Defender |
+| 9 | **System** | **proxy or direct**, per build | terminals, shells, CLI tools, package managers (pacman, paru, yay, Shelly, flatpak…), KDE Plasma and its helpers, systemd services, Docker. On Windows: `C:\Windows\…`, Windows Terminal, PowerShell, Git, Defender. On macOS: `/System/Library/…`, `/usr/…`, Homebrew, Terminal/iTerm2/Ghostty/Warp, software updates |
 | 10 | Russia | direct | `category-ru`, `geoip:ru`, `.ru` `.su` `.рф` |
 
 Browsers aren't in the System rule. They follow rules 7, 8 and 10 in every build.
 
 ### Things to know
 
+- **macOS:** apps are matched by their path inside the `.app` bundle, so Electron helpers such as `Discord Helper` are covered. Safari's network process lives in `WebKit.framework`, which the System rule deliberately doesn't match, so browsers behave the same in both builds there too.
 - **Process rules need Throne's TUN mode** for apps that ignore the system proxy, such as games, qBittorrent and most CLI tools. In system-proxy mode those apps never reach Throne.
 - **A process is matched by the program that opens the connection**, not the window you see. That's why the System rule lists `curl`, `git`, `pacman` and so on, not just the terminals. Python apps show up as `python3`, so they aren't matched by name.
 - **Linux root processes** (`pacman` under sudo, Shelly's main `shelly` process, `packagekitd`, `fwupd`) can only be identified if Throne's core can read other users' `/proc` entries. If it can't, they fall through to rule 10 and then to the proxy.
@@ -44,7 +45,7 @@ Browsers aren't in the System rule. They follow rules 7, 8 and 10 in every build
 https://raw.githubusercontent.com/olegoviccc/olegovic-singbox-routing/main/dist/throne/Olegovic_Linux_system_direct
 ```
 
-Or paste the contents of `dist/throne/ALL`, a `throne://remoteroute/` link that adds all four.
+Or paste the contents of `dist/throne/ALL`, a `throne://remoteroute/` link that adds all six.
 
 **Happ / INCY:** open the `.DEEPLINK` contents on the device. `onadd` adds the profile and activates it.
 
@@ -52,7 +53,7 @@ Or paste the contents of `dist/throne/ALL`, a `throne://remoteroute/` link that 
 
 ## Throne settings (DNS and TUN)
 
-Throne keeps its settings in its own database, not in a file you can import, so set these by hand. They work with all four route profiles: with **Enable DNS Routing** on, Throne reads the active profile and sends the domains of direct rules to the Direct DNS server and the domains of proxy rules to the Remote DNS server.
+Throne keeps its settings in its own database, not in a file you can import, so set these by hand. They work with every route profile: with **Enable DNS Routing** on, Throne reads the active profile and sends the domains of direct rules to the Direct DNS server and the domains of proxy rules to the Remote DNS server.
 
 **Routing settings → DNS** (leave *Use Custom DNS Object* off)
 
@@ -72,8 +73,8 @@ Throne keeps its settings in its own database, not in a file you can import, so 
 
 | Setting | Value | Why |
 | --- | --- | --- |
-| Tun Enable IPv6 | ❌ | with Strict Route on, IPv6 becomes unreachable instead of bypassing the tunnel |
-| Strict Route | ✅ | stops IPv6 and DNS from leaking around the tunnel. Already on by default on Windows; turn it on for Linux |
+| Tun Enable IPv6 | ❌ on Linux/Windows, **✅ on macOS** | Linux/Windows: with Strict Route on, IPv6 becomes unreachable instead of bypassing the tunnel. macOS has no strict route, so IPv6 has to enter the tunnel, where rule 1 rejects it |
+| Strict Route | ✅ | stops IPv6 and DNS from leaking around the tunnel. Already on by default on Windows; turn it on for Linux. No effect on macOS |
 | Auto Redirect (Linux) | ✅ (default) | |
 | Private Range Bypass | ✅ (default) | LAN, KDE Connect and printers stay outside the tunnel |
 

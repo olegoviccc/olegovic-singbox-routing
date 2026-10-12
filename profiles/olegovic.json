@@ -4,7 +4,8 @@
   "final": "proxy",
   "platforms": [
     "linux",
-    "windows"
+    "windows",
+    "macos"
   ],
   "rules": [
     {
@@ -32,6 +33,14 @@
         ],
         "windows": [
           "qbittorrent.exe"
+        ],
+        "macos": [
+          "qbittorrent"
+        ]
+      },
+      "process_path_regex": {
+        "macos": [
+          "(?i)/qbittorrent\\.app/"
         ]
       }
     },
@@ -56,11 +65,21 @@
         "windows": [
           "Discord.exe",
           "Telegram.exe"
+        ],
+        "macos": [
+          "Telegram",
+          "Telegram Desktop",
+          "Discord",
+          "Discord Helper"
         ]
       },
       "process_path_regex": {
         "windows": [
           "(?i)\\\\AppData\\\\Local\\\\Discord\\\\"
+        ],
+        "macos": [
+          "/Telegram( Desktop)?\\.app/",
+          "/Discord\\.app/"
         ]
       }
     },
@@ -93,6 +112,16 @@
           "Battle.net.exe",
           "Battle.net Launcher.exe",
           "Agent.exe"
+        ],
+        "macos": [
+          "steam_osx",
+          "steamwebhelper",
+          "Battle.net",
+          "Agent",
+          "wine",
+          "wine64",
+          "wine64-preloader",
+          "wineserver"
         ]
       },
       "process_path_regex": {
@@ -117,6 +146,17 @@
           "(?i)\\\\Battle\\.net\\\\",
           "(?i)\\\\Blizzard Entertainment\\\\",
           "(?i)\\\\(Overwatch|World of Warcraft|Diablo IV|Diablo III|Diablo II Resurrected|Hearthstone|StarCraft II|StarCraft|Warcraft III|Heroes of the Storm|Call of Duty)\\\\"
+        ],
+        "macos": [
+          "/Steam\\.app/",
+          "/Library/Application Support/Steam/",
+          "/steamapps/",
+          "/Battle\\.net",
+          "/Users/Shared/Battle\\.net/",
+          "/Blizzard",
+          "^/Applications/(World of Warcraft|Diablo IV|Diablo III|Hearthstone|StarCraft II|Overwatch|Heroes of the Storm)/",
+          "/(CrossOver|Whisky|Heroic|Sikarugir|Kegworks)\\.app/",
+          "/Library/Application Support/(CrossOver|Whisky|heroic|Kegworks)/"
         ]
       }
     },
@@ -282,6 +322,43 @@
           "RuntimeBroker.exe",
           "taskhostw.exe",
           "sihost.exe"
+        ],
+        "macos": [
+          "Terminal",
+          "iTerm2",
+          "kitty",
+          "alacritty",
+          "ghostty",
+          "wezterm-gui",
+          "Warp",
+          "stable",
+          "zsh",
+          "bash",
+          "fish",
+          "sh",
+          "nu",
+          "curl",
+          "wget",
+          "aria2c",
+          "git",
+          "git-remote-http",
+          "git-remote-https",
+          "ssh",
+          "scp",
+          "sftp",
+          "rsync",
+          "brew",
+          "softwareupdated",
+          "nsurlsessiond",
+          "mDNSResponder",
+          "trustd",
+          "apsd",
+          "storedownloadd",
+          "docker",
+          "com.docker.backend",
+          "colima",
+          "limactl",
+          "orbstack"
         ]
       },
       "process_path_regex": {
@@ -299,6 +376,15 @@
           "(?i)\\\\WindowsApps\\\\Microsoft\\.WindowsTerminal",
           "(?i)\\\\Program Files\\\\Git\\\\",
           "(?i)\\\\Program Files\\\\PowerShell\\\\"
+        ],
+        "macos": [
+          "^/System/Library/(CoreServices|PrivateFrameworks|Services)/",
+          "^/System/Applications/",
+          "^/usr/(bin|sbin|libexec)/",
+          "^/(opt/homebrew|usr/local)/(bin|sbin|Cellar)/",
+          "/Ghostty\\.app/",
+          "/iTerm\\.app/",
+          "/Warp\\.app/"
         ]
       }
     },
