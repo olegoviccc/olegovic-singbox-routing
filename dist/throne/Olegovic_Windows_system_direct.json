@@ -1,0 +1,194 @@
+[
+  {
+    "protocol": "dns",
+    "action": "hijack-dns"
+  },
+  {
+    "ip_is_private": true,
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "ip_version": 6,
+    "action": "reject"
+  },
+  {
+    "rule_set": [
+      "geosite-category-ads-all"
+    ],
+    "action": "reject"
+  },
+  {
+    "protocol": "bittorrent",
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "process_name": [
+      "qbittorrent.exe"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "rule_set": [
+      "geosite-telegram",
+      "geosite-discord",
+      "geosite-whatsapp",
+      "geoip-telegram"
+    ],
+    "action": "route",
+    "outbound": "proxy"
+  },
+  {
+    "process_name": [
+      "Discord.exe",
+      "Telegram.exe"
+    ],
+    "action": "route",
+    "outbound": "proxy"
+  },
+  {
+    "process_path_regex": [
+      "(?i)\\\\AppData\\\\Local\\\\Discord\\\\"
+    ],
+    "action": "route",
+    "outbound": "proxy"
+  },
+  {
+    "rule_set": [
+      "geosite-steam",
+      "geosite-blizzard"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "process_name": [
+      "steam.exe",
+      "steamwebhelper.exe",
+      "steamservice.exe",
+      "Battle.net.exe",
+      "Battle.net Launcher.exe",
+      "Agent.exe"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "process_path_regex": [
+      "(?i)\\\\Steam\\\\",
+      "(?i)\\\\steamapps\\\\",
+      "(?i)\\\\Battle\\.net\\\\",
+      "(?i)\\\\Blizzard Entertainment\\\\",
+      "(?i)\\\\(Overwatch|World of Warcraft|Diablo IV|Diablo III|Diablo II Resurrected|Hearthstone|StarCraft II|StarCraft|Warcraft III|Heroes of the Storm|Call of Duty)\\\\"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "network": "udp",
+    "port": [
+      443
+    ],
+    "action": "reject"
+  },
+  {
+    "domain_suffix": [
+      "aur.archlinux.org"
+    ],
+    "rule_set": [
+      "geosite-ru-blocked",
+      "geosite-youtube",
+      "geosite-roblox",
+      "geosite-category-ai-!cn",
+      "geosite-github",
+      "geosite-docker",
+      "geosite-npmjs",
+      "geosite-jetbrains",
+      "geosite-notion",
+      "geosite-nvidia",
+      "geosite-intel",
+      "geosite-spotify",
+      "geoip-ru-blocked"
+    ],
+    "action": "route",
+    "outbound": "proxy"
+  },
+  {
+    "rule_set": [
+      "geosite-ru-available-only-inside"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "process_name": [
+      "WindowsTerminal.exe",
+      "OpenConsole.exe",
+      "wt.exe",
+      "conhost.exe",
+      "cmd.exe",
+      "powershell.exe",
+      "pwsh.exe",
+      "wsl.exe",
+      "wslhost.exe",
+      "wslservice.exe",
+      "wslrelay.exe",
+      "alacritty.exe",
+      "wezterm-gui.exe",
+      "mintty.exe",
+      "bash.exe",
+      "git.exe",
+      "git-remote-https.exe",
+      "ssh.exe",
+      "scp.exe",
+      "curl.exe",
+      "wget.exe",
+      "winget.exe",
+      "explorer.exe",
+      "svchost.exe",
+      "MsMpEng.exe",
+      "MpCmdRun.exe",
+      "SearchHost.exe",
+      "StartMenuExperienceHost.exe",
+      "Widgets.exe",
+      "WinStore.App.exe",
+      "MoUsoCoreWorker.exe",
+      "TiWorker.exe",
+      "TrustedInstaller.exe",
+      "msiexec.exe",
+      "smartscreen.exe",
+      "backgroundTaskHost.exe",
+      "RuntimeBroker.exe",
+      "taskhostw.exe",
+      "sihost.exe"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "process_path_regex": [
+      "(?i)^C:\\\\Windows\\\\",
+      "(?i)\\\\Windows Defender\\\\",
+      "(?i)\\\\WindowsApps\\\\Microsoft\\.WindowsTerminal",
+      "(?i)\\\\Program Files\\\\Git\\\\",
+      "(?i)\\\\Program Files\\\\PowerShell\\\\"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "domain_suffix": [
+      "ru",
+      "su",
+      "xn--p1ai"
+    ],
+    "rule_set": [
+      "geosite-category-ru",
+      "geoip-ru"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  }
+]

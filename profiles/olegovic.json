@@ -1,0 +1,320 @@
+{
+  "name": "Olegovic",
+  "description": "Proxy by default; Russian, gaming and torrent traffic direct; system processes switchable.",
+  "final": "proxy",
+  "platforms": [
+    "linux",
+    "windows"
+  ],
+  "rules": [
+    {
+      "name": "IPv6 off",
+      "outbound": "block",
+      "ip_version": 6
+    },
+    {
+      "name": "Ads",
+      "outbound": "block",
+      "geosite": [
+        "category-ads-all"
+      ]
+    },
+    {
+      "name": "Torrents",
+      "outbound": "direct",
+      "protocol": [
+        "bittorrent"
+      ],
+      "process_name": {
+        "linux": [
+          "qbittorrent",
+          "qbittorrent-nox"
+        ],
+        "windows": [
+          "qbittorrent.exe"
+        ]
+      }
+    },
+    {
+      "name": "Messengers",
+      "outbound": "proxy",
+      "geosite": [
+        "telegram",
+        "discord",
+        "whatsapp"
+      ],
+      "geoip": [
+        "telegram"
+      ],
+      "process_name": {
+        "linux": [
+          "Discord",
+          "discord",
+          "Telegram",
+          "telegram-desktop"
+        ],
+        "windows": [
+          "Discord.exe",
+          "Telegram.exe"
+        ]
+      },
+      "process_path_regex": {
+        "windows": [
+          "(?i)\\\\AppData\\\\Local\\\\Discord\\\\"
+        ]
+      }
+    },
+    {
+      "name": "Gaming",
+      "outbound": "direct",
+      "geosite": [
+        "steam",
+        "blizzard"
+      ],
+      "process_name": {
+        "linux": [
+          "steam",
+          "steamwebhelper",
+          "reaper",
+          "pressure-vessel-wrap",
+          "wine",
+          "wine64",
+          "wine-preloader",
+          "wine64-preloader",
+          "wineserver",
+          "umu-run",
+          "faugus-launcher",
+          "lutris"
+        ],
+        "windows": [
+          "steam.exe",
+          "steamwebhelper.exe",
+          "steamservice.exe",
+          "Battle.net.exe",
+          "Battle.net Launcher.exe",
+          "Agent.exe"
+        ]
+      },
+      "process_path_regex": {
+        "linux": [
+          "/\\.local/share/Steam/",
+          "/\\.steam/",
+          "/com\\.valvesoftware\\.Steam/",
+          "/steamapps/",
+          "/compatibilitytools\\.d/",
+          "/\\.local/share/umu/",
+          "/\\.local/share/lutris/",
+          "/\\.local/share/faugus-launcher/",
+          "/\\.config/faugus-launcher/",
+          "/Faugus/",
+          "/Games/",
+          "^/usr/lib/steam/",
+          "^/usr/(lib|lib32|share)/wine/"
+        ],
+        "windows": [
+          "(?i)\\\\Steam\\\\",
+          "(?i)\\\\steamapps\\\\",
+          "(?i)\\\\Battle\\.net\\\\",
+          "(?i)\\\\Blizzard Entertainment\\\\",
+          "(?i)\\\\(Overwatch|World of Warcraft|Diablo IV|Diablo III|Diablo II Resurrected|Hearthstone|StarCraft II|StarCraft|Warcraft III|Heroes of the Storm|Call of Duty)\\\\"
+        ]
+      }
+    },
+    {
+      "name": "QUIC off (force TCP)",
+      "outbound": "block",
+      "network": "udp",
+      "port": [
+        443
+      ]
+    },
+    {
+      "name": "Blocked or geoblocked",
+      "outbound": "proxy",
+      "geosite": [
+        "ru-blocked",
+        "youtube",
+        "roblox",
+        "category-ai-!cn",
+        "github",
+        "docker",
+        "npmjs",
+        "jetbrains",
+        "notion",
+        "nvidia",
+        "intel",
+        "spotify"
+      ],
+      "geoip": [
+        "ru-blocked"
+      ],
+      "domain_suffix": [
+        "aur.archlinux.org"
+      ]
+    },
+    {
+      "name": "Russia-only services",
+      "outbound": "direct",
+      "geosite": [
+        "ru-available-only-inside"
+      ]
+    },
+    {
+      "name": "System",
+      "outbound": "system",
+      "process_name": {
+        "linux": [
+          "konsole",
+          "yakuake",
+          "kitty",
+          "alacritty",
+          "ghostty",
+          "wezterm",
+          "wezterm-gui",
+          "foot",
+          "footclient",
+          "gnome-terminal-server",
+          "kgx",
+          "ptyxis",
+          "tilix",
+          "terminator",
+          "xfce4-terminal",
+          "qterminal",
+          "lxterminal",
+          "xterm",
+          "urxvt",
+          "st",
+          "rio",
+          "contour",
+          "warp",
+          "bash",
+          "zsh",
+          "fish",
+          "sh",
+          "nu",
+          "curl",
+          "wget",
+          "wget2",
+          "aria2c",
+          "git",
+          "git-remote-http",
+          "git-remote-https",
+          "ssh",
+          "scp",
+          "sftp",
+          "rsync",
+          "pacman",
+          "paru",
+          "yay",
+          "pikaur",
+          "flatpak",
+          "fwupd",
+          "fwupdmgr",
+          "packagekitd",
+          "pkcon",
+          "rate-mirrors",
+          "shelly",
+          "Shelly",
+          "plasmashell",
+          "kwin_wayland",
+          "kwin_x11",
+          "kded6",
+          "kded5",
+          "ksmserver",
+          "krunner",
+          "dolphin",
+          "systemsettings",
+          "plasma-discover",
+          "kdeconnectd",
+          "kioworker",
+          "baloo_file",
+          "spectacle",
+          "kwalletd6",
+          "drkonqi",
+          "NetworkManager",
+          "systemd-resolved",
+          "systemd-timesyncd",
+          "avahi-daemon",
+          "cupsd",
+          "dockerd",
+          "containerd",
+          "docker",
+          "podman"
+        ],
+        "windows": [
+          "WindowsTerminal.exe",
+          "OpenConsole.exe",
+          "wt.exe",
+          "conhost.exe",
+          "cmd.exe",
+          "powershell.exe",
+          "pwsh.exe",
+          "wsl.exe",
+          "wslhost.exe",
+          "wslservice.exe",
+          "wslrelay.exe",
+          "alacritty.exe",
+          "wezterm-gui.exe",
+          "mintty.exe",
+          "bash.exe",
+          "git.exe",
+          "git-remote-https.exe",
+          "ssh.exe",
+          "scp.exe",
+          "curl.exe",
+          "wget.exe",
+          "winget.exe",
+          "explorer.exe",
+          "svchost.exe",
+          "MsMpEng.exe",
+          "MpCmdRun.exe",
+          "SearchHost.exe",
+          "StartMenuExperienceHost.exe",
+          "Widgets.exe",
+          "WinStore.App.exe",
+          "MoUsoCoreWorker.exe",
+          "TiWorker.exe",
+          "TrustedInstaller.exe",
+          "msiexec.exe",
+          "smartscreen.exe",
+          "backgroundTaskHost.exe",
+          "RuntimeBroker.exe",
+          "taskhostw.exe",
+          "sihost.exe"
+        ]
+      },
+      "process_path_regex": {
+        "linux": [
+          "^/usr/lib/kf6/",
+          "^/usr/lib/kf5/",
+          "^/usr/lib/libexec/",
+          "^/usr/lib/systemd/",
+          "^/usr/lib/packagekit",
+          "(?i)/shelly"
+        ],
+        "windows": [
+          "(?i)^C:\\\\Windows\\\\",
+          "(?i)\\\\Windows Defender\\\\",
+          "(?i)\\\\WindowsApps\\\\Microsoft\\.WindowsTerminal",
+          "(?i)\\\\Program Files\\\\Git\\\\",
+          "(?i)\\\\Program Files\\\\PowerShell\\\\"
+        ]
+      }
+    },
+    {
+      "name": "Russia",
+      "outbound": "direct",
+      "geosite": [
+        "category-ru"
+      ],
+      "geoip": [
+        "ru"
+      ],
+      "domain_suffix": [
+        "ru",
+        "su",
+        "xn--p1ai"
+      ]
+    }
+  ]
+}

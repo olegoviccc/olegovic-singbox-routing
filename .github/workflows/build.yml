@@ -1,0 +1,41 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Generate profiles and verify rule-sets exist upstream
+        run: python3 build.py --check
+      - name: Make sure dist/ is up to date
+        run: |
+          if [ -n "$(git status --porcelain dist)" ]; then
+            git status --short dist
+            echo "::error::dist/ is stale. Run 'python3 build.py' and commit the result."
+            exit 1
+          fi
+      - name: Validate sing-box output with sing-box check
+        env:
+          SING_BOX_VERSION: "1.14.3"
+        run: |
+          curl -sSLf "https://github.com/SagerNet/sing-box/releases/download/v${SING_BOX_VERSION}/sing-box-${SING_BOX_VERSION}-linux-amd64.tar.gz" | tar xz
+          sb="./sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box"
+          for f in dist/singbox/*.json; do
+            python3 -c '
+          import json, sys
+          print(json.dumps({
+              "inbounds": [{"type": "mixed", "tag": "mixed-in", "listen": "127.0.0.1", "listen_port": 2080}],
+              "outbounds": [{"type": "socks", "tag": "proxy", "server": "127.0.0.1", "server_port": 1},
+                            {"type": "direct", "tag": "direct"}],
+              **json.load(open(sys.argv[1])),
+          }))' "$f" > config.json
+            "$sb" check -c config.json && echo "ok: $f"
+          done
