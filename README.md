@@ -14,7 +14,6 @@ My routing profiles, written once and generated for several clients:
 | Profile | Default | Direct | Proxy | Blocked |
 | --- | --- | --- | --- | --- |
 | **Bypass Russia** | proxy | private IPs, `category-ru`, `ru-available-only-inside`, `geoip:ru`, `.ru` `.su` `.рф` | everything else | ads |
-| **Proxy Russia Blocked** | direct | everything else | `ru-blocked` (sites + IPs), YouTube, Discord, Telegram | ads |
 
 ## Importing
 
