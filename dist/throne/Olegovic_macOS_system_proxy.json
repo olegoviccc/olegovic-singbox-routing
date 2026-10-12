@@ -1,0 +1,208 @@
+[
+  {
+    "protocol": "dns",
+    "action": "hijack-dns"
+  },
+  {
+    "ip_is_private": true,
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "ip_version": 6,
+    "action": "reject"
+  },
+  {
+    "rule_set": [
+      "geosite-category-ads-all"
+    ],
+    "action": "reject"
+  },
+  {
+    "protocol": "bittorrent",
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "process_name": [
+      "qbittorrent"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "process_path_regex": [
+      "(?i)/qbittorrent\\.app/"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "rule_set": [
+      "geosite-telegram",
+      "geosite-discord",
+      "geosite-whatsapp",
+      "geoip-telegram"
+    ],
+    "action": "route",
+    "outbound": "proxy"
+  },
+  {
+    "process_name": [
+      "Telegram",
+      "Telegram Desktop",
+      "Discord",
+      "Discord Helper"
+    ],
+    "action": "route",
+    "outbound": "proxy"
+  },
+  {
+    "process_path_regex": [
+      "/Telegram( Desktop)?\\.app/",
+      "/Discord\\.app/"
+    ],
+    "action": "route",
+    "outbound": "proxy"
+  },
+  {
+    "rule_set": [
+      "geosite-steam",
+      "geosite-blizzard"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "process_name": [
+      "steam_osx",
+      "steamwebhelper",
+      "Battle.net",
+      "Agent",
+      "wine",
+      "wine64",
+      "wine64-preloader",
+      "wineserver"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "process_path_regex": [
+      "/Steam\\.app/",
+      "/Library/Application Support/Steam/",
+      "/steamapps/",
+      "/Battle\\.net",
+      "/Users/Shared/Battle\\.net/",
+      "/Blizzard",
+      "^/Applications/(World of Warcraft|Diablo IV|Diablo III|Hearthstone|StarCraft II|Overwatch|Heroes of the Storm)/",
+      "/(CrossOver|Whisky|Heroic|Sikarugir|Kegworks)\\.app/",
+      "/Library/Application Support/(CrossOver|Whisky|heroic|Kegworks)/"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "network": "udp",
+    "port": [
+      443
+    ],
+    "action": "reject"
+  },
+  {
+    "domain_suffix": [
+      "aur.archlinux.org"
+    ],
+    "rule_set": [
+      "geosite-ru-blocked",
+      "geosite-youtube",
+      "geosite-roblox",
+      "geosite-category-ai-!cn",
+      "geosite-github",
+      "geosite-docker",
+      "geosite-npmjs",
+      "geosite-jetbrains",
+      "geosite-notion",
+      "geosite-nvidia",
+      "geosite-intel",
+      "geosite-spotify",
+      "geoip-ru-blocked"
+    ],
+    "action": "route",
+    "outbound": "proxy"
+  },
+  {
+    "rule_set": [
+      "geosite-ru-available-only-inside"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  },
+  {
+    "process_name": [
+      "Terminal",
+      "iTerm2",
+      "kitty",
+      "alacritty",
+      "ghostty",
+      "wezterm-gui",
+      "Warp",
+      "stable",
+      "zsh",
+      "bash",
+      "fish",
+      "sh",
+      "nu",
+      "curl",
+      "wget",
+      "aria2c",
+      "git",
+      "git-remote-http",
+      "git-remote-https",
+      "ssh",
+      "scp",
+      "sftp",
+      "rsync",
+      "brew",
+      "softwareupdated",
+      "nsurlsessiond",
+      "mDNSResponder",
+      "trustd",
+      "apsd",
+      "storedownloadd",
+      "docker",
+      "com.docker.backend",
+      "colima",
+      "limactl",
+      "orbstack"
+    ],
+    "action": "route",
+    "outbound": "proxy"
+  },
+  {
+    "process_path_regex": [
+      "^/System/Library/(CoreServices|PrivateFrameworks|Services)/",
+      "^/System/Applications/",
+      "^/usr/(bin|sbin|libexec)/",
+      "^/(opt/homebrew|usr/local)/(bin|sbin|Cellar)/",
+      "/Ghostty\\.app/",
+      "/iTerm\\.app/",
+      "/Warp\\.app/"
+    ],
+    "action": "route",
+    "outbound": "proxy"
+  },
+  {
+    "domain_suffix": [
+      "ru",
+      "su",
+      "xn--p1ai"
+    ],
+    "rule_set": [
+      "geosite-category-ru",
+      "geoip-ru"
+    ],
+    "action": "route",
+    "outbound": "direct"
+  }
+]
