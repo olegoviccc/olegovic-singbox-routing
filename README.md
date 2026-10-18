@@ -1,5 +1,7 @@
 # olegovic-singbox-routing
 
+**English** · [Русский](README.ru.md)
+
 My routing profile, written once in `profiles/olegovic.json` and generated for several clients.
 
 | Client | File | Notes |
@@ -7,7 +9,7 @@ My routing profile, written once in `profiles/olegovic.json` and generated for s
 | [Throne](https://github.com/throneproj/Throne) | `dist/throne/Olegovic_<Linux\|Windows\|macOS>_system_<proxy\|direct>` | `throne://route/…` link. `dist/throne/ALL` adds all six |
 | Happ | `dist/happ/Olegovic.DEEPLINK` / `.json` | mobile build, no process rules |
 | INCY | `dist/incy/Olegovic.DEEPLINK` / `.json` | mobile build, no process rules |
-| sing-box (Hiddify, Karing, NekoBox…) | `dist/singbox/<same names>.json`, `Olegovic_mobile.json` | `route` block to merge into a full config |
+| sing-box (Hiddify, Karing, NekoBox…) | `dist/singbox/<same names>.json`, `Olegovic_mobile.json` | `dns` + `route` blocks to merge into a full config |
 
 ## What goes where
 
@@ -39,7 +41,7 @@ Browsers aren't in the System rule. They follow rules 7, 8 and 10 in every build
 
 ## Importing
 
-**Throne:** import from a raw link (it works once this is on `main`), e.g.
+**Throne:** import from a raw link, e.g.
 
 ```
 https://raw.githubusercontent.com/olegoviccc/olegovic-singbox-routing/main/dist/throne/Olegovic_Linux_system_direct
@@ -81,6 +83,15 @@ Throne keeps its settings in its own database, not in a file you can import, so 
 If Strict Route breaks Docker or VM networking on Linux, turn it off and also turn off IPv6 on the system (e.g. `sysctl net.ipv6.conf.all.disable_ipv6=1`). Otherwise IPv6 traffic goes around the tunnel.
 
 The sing-box files in `dist/singbox/` include the same DNS setup as a `dns` block. Happ/INCY profiles use the same two resolvers.
+
+## Troubleshooting
+
+**"Input is not valid JSON, base64, or a Throne route link" when Throne fetches a link.** Throne doesn't download `raw.githubusercontent.com` links directly. It rewrites them to a jsDelivr mirror (`https://testingcf.jsdelivr.net/gh/olegoviccc/olegovic-singbox-routing@main/dist/throne/…`, depending on *Routing settings → Remote Rule-set Mirror*). jsDelivr caches `@main` for hours, including "file not found" answers. A file that is new, or was requested while the repo was private, can come back as an error page, and Throne can't parse that.
+
+- CI purges the jsDelivr cache for every file in `dist/` after each push to `main`. To purge again by hand, run the **Build** workflow from the Actions tab.
+- To check what Throne gets, open the jsDelivr URL above in a browser. It should show a single `throne://route/…` line.
+- Workaround: open the raw GitHub link in a browser, copy the `throne://route/…` text and import it from the clipboard. It won't auto-update then.
+- Or set *Remote Rule-set Mirror* to **GitHub**, so Throne uses the raw links as they are. Rule-sets will then also download from GitHub.
 
 ## Editing
 
