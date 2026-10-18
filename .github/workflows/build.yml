@@ -39,3 +39,25 @@ jobs:
           }))' "$f" > config.json
             "$sb" check -c config.json && echo "ok: $f"
           done
+
+  # Throne downloads raw.githubusercontent.com links through jsDelivr, which
+  # caches @main (including "file not found") for hours. Purge every published
+  # file after each push to main so new or changed profiles show up right away.
+  purge-cdn:
+    needs: build
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - name: Purge jsDelivr cache for dist/
+        run: |
+          fail=0
+          for f in $(git ls-files dist); do
+            url="https://purge.jsdelivr.net/gh/${GITHUB_REPOSITORY}@main/${f}"
+            if out=$(curl -sS --retry 3 -f "$url"); then
+              echo "purged $f: $(echo "$out" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("status"))' 2>/dev/null)"
+            else
+              echo "::warning::purge failed for $f"; fail=1
+            fi
+          done
+          exit $fail
