@@ -15,7 +15,7 @@ Other profiles in `profiles/` are copies for friends, built only for the clients
 
 | Profile | Throne link |
 | --- | --- |
-| Barada (Windows, Throne only) | `dist/throne/Barada_Windows_system_<proxy\|direct>`, same rules as Olegovic |
+| Barada (Windows, Throne only) | `dist/throne/Barada_Windows_system_<proxy\|direct>`, same rules as Olegovic. `dist/throne/Barada_ALL` adds both |
 
 ## What goes where
 
@@ -47,13 +47,13 @@ Browsers aren't in the System rule. They follow rules 7, 8 and 10 in every build
 
 ## Importing
 
-**Throne:** import from a raw link, e.g.
+**Throne:** the easiest way is to copy the contents of `dist/throne/ALL` (a `throne://remoteroute/` link that adds all six as auto-updating remote profiles) and press *Import* in the routing profiles dialog.
+
+*Import* reads text, not URLs: it takes a `throne://route/…` or `throne://remoteroute/…` link, base64 or JSON. Pasting an `https://` link there fails with "Input is not valid JSON, base64, or a Throne route link". To add a single profile by URL, create a new *Remote profile* and put the raw link into its URL field, e.g.
 
 ```
 https://raw.githubusercontent.com/olegoviccc/olegovic-singbox-routing/main/dist/throne/Olegovic_Linux_system_direct
 ```
-
-Or paste the contents of `dist/throne/ALL`, a `throne://remoteroute/` link that adds all six.
 
 **Happ / INCY:** open the `.DEEPLINK` contents on the device. `onadd` adds the profile and activates it.
 
@@ -92,7 +92,9 @@ The sing-box files in `dist/singbox/` include the same DNS setup as a `dns` bloc
 
 ## Troubleshooting
 
-**"Input is not valid JSON, base64, or a Throne route link" when Throne fetches a link.** Throne doesn't download `raw.githubusercontent.com` links directly. It rewrites them to a jsDelivr mirror (`https://testingcf.jsdelivr.net/gh/olegoviccc/olegovic-singbox-routing@main/dist/throne/…`, depending on *Routing settings → Remote Rule-set Mirror*). jsDelivr caches `@main` for hours, including "file not found" answers. A file that is new, or was requested while the repo was private, can come back as an error page, and Throne can't parse that.
+**"Input is not valid JSON, base64, or a Throne route link" right after pressing *Import*.** You pasted an `https://` link. See *Importing* above.
+
+**The same error when Throne fetches a link.** Throne doesn't download `raw.githubusercontent.com` links directly. It rewrites them to a jsDelivr mirror (`https://testingcf.jsdelivr.net/gh/olegoviccc/olegovic-singbox-routing@main/dist/throne/…`, depending on *Routing settings → Remote Rule-set Mirror*). jsDelivr caches `@main` for hours, including "file not found" answers. A file that is new, or was requested while the repo was private, can come back as an error page, and Throne can't parse that.
 
 - CI purges the jsDelivr cache for every file in `dist/` after each push to `main`. To purge again by hand, run the **Build** workflow from the Actions tab.
 - To check what Throne gets, open the jsDelivr URL above in a browser. It should show a single `throne://route/…` line.
@@ -105,7 +107,7 @@ The sing-box files in `dist/singbox/` include the same DNS setup as a `dns` bloc
 2. Run `python3 build.py` (Python 3, no dependencies). `--check` also verifies that every rule-set exists upstream.
 3. Commit `profiles/` and `dist/` together. CI fails if `dist/` is stale, and it runs every sing-box output through `sing-box check`.
 
-Profile keys besides `rules`: `name`, `description`, `final` (`proxy` or `direct`), `platforms` (`linux`, `windows`, `macos`), `clients` (any of `throne`, `singbox`, `happ`, `incy`; all by default) and `in_all` (`false` keeps the profile out of `dist/throne/ALL`).
+Profile keys besides `rules`: `name`, `description`, `final` (`proxy` or `direct`), `platforms` (`linux`, `windows`, `macos`), `clients` (any of `throne`, `singbox`, `happ`, `incy`; all by default) and `in_all` (`false` keeps the profile out of `dist/throne/ALL` and writes its own `dist/throne/<Name>_ALL`).
 
 Rule format:
 

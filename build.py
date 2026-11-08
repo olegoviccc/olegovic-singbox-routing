@@ -8,6 +8,7 @@ one mobile build without process rules:
   dist/throne/<Name>_<Platform>_system_<proxy|direct>       throne://route link
   dist/throne/<Name>_<Platform>_system_<proxy|direct>.json  plain rules array
   dist/throne/ALL                                           remoteroute bundle
+  dist/throne/<Name>_ALL                                    same, for a profile with "in_all": false
   dist/singbox/<same names>.json and <Name>_mobile.json     sing-box dns + route
   dist/happ/<Name>.json, <Name>.DEEPLINK                    Happ (mobile build)
   dist/incy/<Name>.json, <Name>.DEEPLINK                    INCY (mobile build)
@@ -373,19 +374,21 @@ def build(profiles):
     for p in profiles:
         final = p.get("final", "proxy")
         clients = set(p.get("clients", CLIENTS))
+        own_bundle = []
         for display, name, plat, system in targets(p):
             parts = target_parts(p, plat, system)
             if "throne" in clients:
                 out(f"throne/{name}", throne_link(display, final, parts))
                 out(f"throne/{name}.json", dump(throne_rules(parts)))
-                if p.get("in_all", True):
-                    bundle.append(f"{RAW}/throne/{name}#{display}")
+                (bundle if p.get("in_all", True) else own_bundle).append(f"{RAW}/throne/{name}#{display}")
             if "singbox" in clients:
                 out(f"singbox/{name}.json", dump(singbox_route(final, parts)))
             if clients & {"throne", "singbox"}:
                 built.append(name)
 
         name = slug(p["name"])
+        if own_bundle:
+            out(f"throne/{name}_ALL", "throne://remoteroute/" + b64("\n".join(own_bundle), urlsafe=True))
         if "singbox" in clients:
             out(f"singbox/{name}_mobile.json", dump(singbox_route(final, target_parts(p, None, None))))
         mobile = [c for c in ("happ", "incy") if c in clients]

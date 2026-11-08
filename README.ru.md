@@ -15,7 +15,7 @@
 
 | Профиль | Ссылка для Throne |
 | --- | --- |
-| Barada (Windows, только Throne) | `dist/throne/Barada_Windows_system_<proxy\|direct>`, правила как у Olegovic |
+| Barada (Windows, только Throne) | `dist/throne/Barada_Windows_system_<proxy\|direct>`, правила как у Olegovic. `dist/throne/Barada_ALL` добавляет оба |
 
 ## Что куда идёт
 
@@ -47,13 +47,13 @@
 
 ## Импорт
 
-**Throne:** импортируйте по raw-ссылке, например:
+**Throne:** проще всего скопировать содержимое `dist/throne/ALL` (ссылка `throne://remoteroute/`, добавляет все шесть профилей как удалённые с автообновлением) и нажать *Импорт* в окне профилей маршрутизации.
+
+*Импорт* читает текст, а не скачивает ссылки: он принимает `throne://route/…`, `throne://remoteroute/…`, base64 или JSON. Если вставить туда `https://`-ссылку, будет ошибка «Input is not valid JSON, base64, or a Throne route link». Чтобы добавить один профиль по URL, создайте новый *Удалённый профиль* и вставьте raw-ссылку в поле URL, например:
 
 ```
 https://raw.githubusercontent.com/olegoviccc/olegovic-singbox-routing/main/dist/throne/Olegovic_Linux_system_direct
 ```
-
-Или вставьте содержимое `dist/throne/ALL` — ссылку `throne://remoteroute/`, которая добавляет все шесть профилей.
 
 **Happ / INCY:** откройте содержимое файла `.DEEPLINK` на устройстве. `onadd` добавляет профиль и сразу его включает.
 
@@ -92,7 +92,9 @@ Throne хранит настройки в собственной базе, а н
 
 ## Если что-то не работает
 
-**Throne пишет «Input is not valid JSON, base64, or a Throne route link» при загрузке ссылки.** Throne не скачивает ссылки `raw.githubusercontent.com` напрямую — он подменяет их на зеркало jsDelivr (`https://testingcf.jsdelivr.net/gh/olegoviccc/olegovic-singbox-routing@main/dist/throne/…`, в зависимости от *Routing settings → Remote Rule-set Mirror*). jsDelivr кэширует `@main` на несколько часов, в том числе ответы «файл не найден». Новый файл или файл, который запрашивали, пока репозиторий был приватным, может прийти страницей с ошибкой, и Throne не может её разобрать.
+**«Input is not valid JSON, base64, or a Throne route link» сразу после нажатия *Импорт*.** Вставлена `https://`-ссылка, см. раздел «Импорт» выше.
+
+**Та же ошибка при загрузке ссылки самим Throne.** Throne не скачивает ссылки `raw.githubusercontent.com` напрямую — он подменяет их на зеркало jsDelivr (`https://testingcf.jsdelivr.net/gh/olegoviccc/olegovic-singbox-routing@main/dist/throne/…`, в зависимости от *Routing settings → Remote Rule-set Mirror*). jsDelivr кэширует `@main` на несколько часов, в том числе ответы «файл не найден». Новый файл или файл, который запрашивали, пока репозиторий был приватным, может прийти страницей с ошибкой, и Throne не может её разобрать.
 
 - После каждого пуша в `main` CI сбрасывает кэш jsDelivr для всех файлов в `dist/`. Чтобы сбросить вручную, запустите workflow **Build** на вкладке Actions.
 - Чтобы увидеть, что получает Throne, откройте ссылку jsDelivr выше в браузере. Там должна быть одна строка `throne://route/…`.
@@ -105,7 +107,7 @@ Throne хранит настройки в собственной базе, а н
 2. Запустите `python3 build.py` (Python 3, без зависимостей). С `--check` скрипт ещё и проверяет, что каждый rule-set существует в источниках.
 3. Коммитьте `profiles/` и `dist/` вместе. CI падает, если `dist/` устарел, и прогоняет каждый файл sing-box через `sing-box check`.
 
-Ключи профиля кроме `rules`: `name`, `description`, `final` (`proxy` или `direct`), `platforms` (`linux`, `windows`, `macos`), `clients` (любые из `throne`, `singbox`, `happ`, `incy`; по умолчанию все) и `in_all` (`false` не включает профиль в `dist/throne/ALL`).
+Ключи профиля кроме `rules`: `name`, `description`, `final` (`proxy` или `direct`), `platforms` (`linux`, `windows`, `macos`), `clients` (любые из `throne`, `singbox`, `happ`, `incy`; по умолчанию все) и `in_all` (`false` не включает профиль в `dist/throne/ALL`, а пишет ему отдельный `dist/throne/<Name>_ALL`).
 
 Формат правила:
 
