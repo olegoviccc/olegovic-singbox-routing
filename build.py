@@ -416,6 +416,25 @@ def fetch(url):
         return r.read()
 
 
+# GitHub raw sometimes drops or throttles a burst of HEAD requests, so retry
+# network errors and only call a rule-set missing on a real 404.
+def rule_set_problem(url, attempts=4):
+    err = None
+    for i in range(attempts):
+        try:
+            req = urllib.request.Request(url, method="HEAD", headers={"User-Agent": "routing-build"})
+            urllib.request.urlopen(req, timeout=30).close()
+            return None
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return "not found"
+            err = f"HTTP {e.code}"
+        except (urllib.error.URLError, OSError) as e:
+            err = str(getattr(e, "reason", e))
+        time.sleep(2 ** i)
+    return f"could not be checked ({err})"
+
+
 def check(profiles):
     srslist = fetch(THRONE_SRSLIST).decode()
     throne_tags = set(re.findall(r'\{"([^"]+)",\s*"', srslist))
@@ -431,11 +450,9 @@ def check(profiles):
                     bad.append(f"{p['name']}: {tag} is not a Throne built-in rule-set")
                 kind, name = tag.split("-", 1)
                 url = SRS_URL.format(kind=kind, name=name)
-                try:
-                    req = urllib.request.Request(url, method="HEAD")
-                    urllib.request.urlopen(req, timeout=30).close()
-                except urllib.error.URLError:
-                    bad.append(f"{p['name']}: {tag} not found in runetfreedom ({url})")
+                problem = rule_set_problem(url)
+                if problem:
+                    bad.append(f"{p['name']}: {tag} {problem} in runetfreedom ({url})")
             for key in PROCESS:
                 if key != "process_path_regex":
                     continue
