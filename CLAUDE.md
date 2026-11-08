@@ -1,6 +1,6 @@
 # olegovic-singbox-routing
 
-One routing profile (`profiles/olegovic.json`) generated into configs for Throne, Happ, INCY and sing-box clients (`dist/`). README.md (EN) and README.ru.md (RU) explain the rules.
+My routing profile (`profiles/olegovic.json`, plus friends' copies like `profiles/barada.json` limited via `clients`/`platforms`/`in_all`) generated into configs for Throne, Happ, INCY and sing-box clients (`dist/`). README.md (EN) and README.ru.md (RU) explain the rules.
 
 ## Rules
 

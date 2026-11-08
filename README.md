@@ -11,6 +11,12 @@ My routing profile, written once in `profiles/olegovic.json` and generated for s
 | INCY | `dist/incy/Olegovic.DEEPLINK` / `.json` | mobile build, no process rules |
 | sing-box (Hiddify, Karing, NekoBox…) | `dist/singbox/<same names>.json`, `Olegovic_mobile.json` | `dns` + `route` blocks to merge into a full config |
 
+Other profiles in `profiles/` are copies for friends, built only for the clients they use:
+
+| Profile | Throne link |
+| --- | --- |
+| Barada (Windows, Throne only) | `dist/throne/Barada_Windows_system_<proxy\|direct>`, same rules as Olegovic |
+
 ## What goes where
 
 Rules are checked top to bottom and the first match wins. Anything that matches nothing goes through the **proxy**.
@@ -98,6 +104,8 @@ The sing-box files in `dist/singbox/` include the same DNS setup as a `dns` bloc
 1. Edit `profiles/olegovic.json`.
 2. Run `python3 build.py` (Python 3, no dependencies). `--check` also verifies that every rule-set exists upstream.
 3. Commit `profiles/` and `dist/` together. CI fails if `dist/` is stale, and it runs every sing-box output through `sing-box check`.
+
+Profile keys besides `rules`: `name`, `description`, `final` (`proxy` or `direct`), `platforms` (`linux`, `windows`, `macos`), `clients` (any of `throne`, `singbox`, `happ`, `incy`; all by default) and `in_all` (`false` keeps the profile out of `dist/throne/ALL`).
 
 Rule format:
 

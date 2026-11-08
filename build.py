@@ -67,6 +67,8 @@ HAPP_DEFAULTS = {
 OUTBOUNDS = ("proxy", "direct", "block", "system")
 PLATFORMS = ("linux", "windows", "macos")
 PLATFORM_NAMES = {"linux": "Linux", "windows": "Windows", "macos": "macOS"}
+# Output formats a profile can be built for; "clients" in a profile limits it.
+CLIENTS = ("throne", "singbox", "happ", "incy")
 
 # sing-box ORs these together within one rule (rule_set merges into them).
 ADDRESS = ("domain", "domain_suffix", "domain_keyword", "domain_regex", "ip_cidr")
@@ -106,6 +108,11 @@ def load_profile(path):
     for plat in p.get("platforms", []):
         if plat not in PLATFORMS:
             die(f"{where}: unknown platform {plat!r}")
+    for client in p.get("clients", CLIENTS):
+        if client not in CLIENTS:
+            die(f"{where}: unknown client {client!r}")
+    if not isinstance(p.get("in_all", True), bool):
+        die(f"{where}: in_all must be true or false")
     known = set(ADDRESS + PROCESS + CONDITION) | {"geosite", "geoip", "protocol", "outbound", "name"}
     for i, rule in enumerate(p.get("rules", []), 1):
         tag = f"{where}: rule {rule.get('name') or i!r}"
@@ -365,22 +372,30 @@ def build(profiles):
     built = []
     for p in profiles:
         final = p.get("final", "proxy")
+        clients = set(p.get("clients", CLIENTS))
         for display, name, plat, system in targets(p):
             parts = target_parts(p, plat, system)
-            out(f"throne/{name}", throne_link(display, final, parts))
-            out(f"throne/{name}.json", dump(throne_rules(parts)))
-            out(f"singbox/{name}.json", dump(singbox_route(final, parts)))
-            bundle.append(f"{RAW}/throne/{name}#{display}")
-            built.append(name)
+            if "throne" in clients:
+                out(f"throne/{name}", throne_link(display, final, parts))
+                out(f"throne/{name}.json", dump(throne_rules(parts)))
+                if p.get("in_all", True):
+                    bundle.append(f"{RAW}/throne/{name}#{display}")
+            if "singbox" in clients:
+                out(f"singbox/{name}.json", dump(singbox_route(final, parts)))
+            if clients & {"throne", "singbox"}:
+                built.append(name)
 
         name = slug(p["name"])
-        out(f"singbox/{name}_mobile.json", dump(singbox_route(final, target_parts(p, None, None))))
-        happ_json = DIST / f"happ/{name}.json"
-        prof = happ_profile(p, happ_last_updated(p, happ_json))
-        for client in ("happ", "incy"):
-            out(f"{client}/{name}.json", dump(prof))
-            out(f"{client}/{name}.DEEPLINK", f"{client}://routing/onadd/{b64(compact(prof))}")
-        built.append(f"{name} (mobile)")
+        if "singbox" in clients:
+            out(f"singbox/{name}_mobile.json", dump(singbox_route(final, target_parts(p, None, None))))
+        mobile = [c for c in ("happ", "incy") if c in clients]
+        if mobile:
+            prof = happ_profile(p, happ_last_updated(p, DIST / f"{mobile[0]}/{name}.json"))
+            for client in mobile:
+                out(f"{client}/{name}.json", dump(prof))
+                out(f"{client}/{name}.DEEPLINK", f"{client}://routing/onadd/{b64(compact(prof))}")
+        if clients & {"singbox", "happ", "incy"}:
+            built.append(f"{name} (mobile)")
 
     if bundle:
         out("throne/ALL", "throne://remoteroute/" + b64("\n".join(bundle), urlsafe=True))

@@ -11,6 +11,12 @@
 | INCY | `dist/incy/Olegovic.DEEPLINK` / `.json` | мобильная сборка, без правил по процессам |
 | sing-box (Hiddify, Karing, NekoBox…) | `dist/singbox/<те же имена>.json`, `Olegovic_mobile.json` | блоки `dns` и `route`, которые нужно влить в полный конфиг |
 
+Остальные профили в `profiles/` — копии для друзей, собираются только для их клиентов:
+
+| Профиль | Ссылка для Throne |
+| --- | --- |
+| Barada (Windows, только Throne) | `dist/throne/Barada_Windows_system_<proxy\|direct>`, правила как у Olegovic |
+
 ## Что куда идёт
 
 Правила проверяются сверху вниз, срабатывает первое подходящее. Всё, что не подошло ни под одно правило, идёт **через прокси**.
@@ -98,6 +104,8 @@ Throne хранит настройки в собственной базе, а н
 1. Измените `profiles/olegovic.json`.
 2. Запустите `python3 build.py` (Python 3, без зависимостей). С `--check` скрипт ещё и проверяет, что каждый rule-set существует в источниках.
 3. Коммитьте `profiles/` и `dist/` вместе. CI падает, если `dist/` устарел, и прогоняет каждый файл sing-box через `sing-box check`.
+
+Ключи профиля кроме `rules`: `name`, `description`, `final` (`proxy` или `direct`), `platforms` (`linux`, `windows`, `macos`), `clients` (любые из `throne`, `singbox`, `happ`, `incy`; по умолчанию все) и `in_all` (`false` не включает профиль в `dist/throne/ALL`).
 
 Формат правила:
 
