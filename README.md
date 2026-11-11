@@ -2,6 +2,8 @@
 
 **English** · [Русский](README.ru.md)
 
+> **Temporary:** [`vpn-research/`](vpn-research/) holds research notes for a self-hosted VPN (in Russian). It will move to its own repository later.
+
 My routing profile, written once in `profiles/olegovic.json` and generated for several clients.
 
 | Client | File | Notes |
